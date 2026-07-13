@@ -1,0 +1,268 @@
+openapi: 3.0.3
+
+info:
+  title: Shopping List API
+  description: API for managing shopping lists, allowing users to create, retrieve, update, and delete their shopping lists.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/shoppping-list:
+    post:
+      tags:
+        - Shopping Lists
+      summary: Create a shopping list
+      description: Creates a new empty shopping list for a user.
+      operationId: createShoppingList
+      parameters:
+        - in: header
+          name: X-Correlation-ID
+          description: Required UUID used to correlate request processing and logs.
+          schema:
+            type: string
+            format: uuid
+          required: true
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShoppingListRequest'
+            examples:
+              weeklyShop:
+                summary: Weekly shopping list
+                value:
+                  userId: 1
+                  listName: Weekly Shop
+                  spendingLimit: 75.00
+                  date: '2026-07-13'
+
+      responses:
+        '201':
+          description: Shopping list created successfully
+          headers:
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListResponse'
+              examples:
+                createdList:
+                  summary: Created shopping list
+                  value:
+                    listId: 12
+                    userId: 1
+                    listName: Weekly Shop
+                    spendingLimit: 75.00
+                    date: '2026-07-18'
+                    totalCost: 0.00
+                    remainingBudget: 75.00
+                    overBudget: false
+
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidRequest:
+                  summary: Validation error
+                  value:
+                    error: Bad Request
+                    message: Spending limit must be greater than or equal to zero
+
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorizedAccess:
+                  summary: Unauthorized access
+                  value:
+                    error: Unauthorized
+                    message: User is not authenticated
+
+        '403':
+          description: Forbidden access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                forbiddenAccess:
+                  summary: Forbidden access
+                  value:
+                    error: Forbidden
+                    message: User ID [123] is not authorized to create a shopping list for user ID [456]
+
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                userNotFound:
+                  summary: User does not exist
+                  value:
+                    error: Not Found
+                    message: User ID [999] does not exist
+
+        '409':
+          description: A conflicting shopping list already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicateList:
+                  summary: Duplicate shopping list
+                  value:
+                    error: Conflict
+                    message: A shopping list with the name [weekly shop] already exists
+
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serviceUnavailable:
+                  summary: Service unavailable
+                  value:
+                    error: Service Unavailable
+                    message: The service is temporarily unavailable. Please try again later.
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateShoppingListRequest:
+      type: object
+      required:
+        - userId
+        - listName
+      properties:
+        userId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: ID of the user who owns the shopping list
+          example: 1
+
+        listName:
+          type: string
+          minLength: 1
+          maxLength: 150
+          description: Name of the shopping list
+          example: Weekly Shop
+
+        spendingLimit:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 9999999999.99
+          nullable: true
+          description: Optional maximum spending limit for the shopping list
+          example: 75.00
+
+        date:
+          type: string
+          format: date
+          nullable: true
+          description: Date on which the shopping is planned
+          example: '2026-07-18'
+
+    ShoppingListResponse:
+      type: object
+      required:
+        - listId
+        - userId
+        - listName
+        - totalCost
+        - overBudget
+      properties:
+        listId:
+          type: integer
+          format: int64
+          description: Unique ID of the shopping list
+          example: 12
+
+        userId:
+          type: integer
+          format: int64
+          description: ID of the user who owns the shopping list
+          example: 1
+
+        listName:
+          type: string
+          description: Name of the shopping list
+          example: Weekly Shop
+
+        spendingLimit:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum spending limit for the list
+          example: 75.00
+
+        date:
+          type: string
+          format: date
+          nullable: true
+          description: Planned shopping date
+          example: '2026-07-18'
+
+        totalCost:
+          type: number
+          format: double
+          description: Current total cost of all items on the list
+          example: 0.00
+
+        remainingBudget:
+          type: number
+          format: double
+          description: Spending limit less the current total cost of all items on the list
+
+        overBudget:
+          type: boolean
+          description: Indicates whether the total cost exceeds the spending limit
+          example: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+
+        error:
+          type: string
+          example: Bad Request
+
+        message:
+          type: string
+          example: Request validation failed
+
+security:
+  - bearerAuth: [ ]
