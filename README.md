@@ -1,5 +1,5 @@
 # Shopping List Application
-Shopping List Application (Created for Cyber Media Software Developer/Engineer Recruitment Coding Challenge)
+>Shopping List Application (Created for Cyber Media Software Developer/Engineer Recruitment Coding Challenge)
 
 ---
 
@@ -8,7 +8,6 @@ Shopping List Application (Created for Cyber Media Software Developer/Engineer R
 - [Description](#description)
   - [Technology stack](#technology-stack)
 - [Prerequisites](#prerequisites)
-  - [Local startup](#local-startup)
 - [API documentation](#api-documentation)
   - [Endpoint summary](#endpoint-summary)
   - [Sign up](#sign-up)
@@ -24,6 +23,7 @@ Shopping List Application (Created for Cyber Media Software Developer/Engineer R
   - [Running the complete test suite](#running-the-complete-test-suite)
   - [Running individual test layers](#running-individual-test-layers)
   - [Running tests in IntelliJ IDEA](#running-tests-in-intellij-idea)
+- [Running the application locally](#running-the-application-locally)
 
 ---
 
@@ -56,24 +56,7 @@ Shopping List Application (Created for Cyber Media Software Developer/Engineer R
   ```zsh
   openssl rand -base64 32
   ```
-
-### Local startup
-
-1. Start MySQL:
-
-   ```zsh
-   docker compose up -d mysql
-   ```
-
-2. Set the JWT signing key and run the application with the local profile:
-
-   ```zsh
-   export JWT_SECRET="<your-base64-secret>"
-   ./mvnw spring-boot:run -Plocal
-   ```
-
-Flyway applies the database migrations automatically when the application starts.
-
+  
 ---
 
 ## API documentation
@@ -397,3 +380,24 @@ The Cucumber feature is located at `src/test/resources/features/complete-shoppin
 2. Reload the Maven project so that all JUnit, Cucumber, and Testcontainers dependencies are available.
 3. Start Docker Desktop before running an integration or Cucumber test.
 4. Run your desired tests. To execute the Cucumber feature, open `RunCucumberTest` and run the class.
+
+---
+
+## Running the application locally
+
+1. Start MySQL:
+
+   ```zsh
+   docker compose up -d mysql
+   ```
+
+2. Set the JWT signing key and run the application with the local profile:
+
+   ```zsh
+   export JWT_SECRET="<your-base64-secret>"
+   ./mvnw spring-boot:run -Plocal
+   ```
+
+Flyway will apply the database migrations automatically when the application starts.
+
+---
