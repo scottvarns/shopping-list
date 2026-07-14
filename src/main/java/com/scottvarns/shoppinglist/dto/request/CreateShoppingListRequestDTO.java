@@ -23,7 +23,7 @@ public record CreateShoppingListRequestDTO(
         String listName,
 
         @DecimalMin(value = "0.00", message = "CreateShoppingListRequestDTO.spendingLimit must be greater than or equal to 0.00")
-        @DecimalMax(value = "9999999999.99", message = "CreateShoppingListRequestDTO.spendingLimit must be less than or equal to 9999999999.99")
+        @DecimalMax(value = "99999999.99", message = "CreateShoppingListRequestDTO.spendingLimit must be less than or equal to 9999999999.99")
         BigDecimal spendingLimit,
 
         LocalDate date

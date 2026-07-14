@@ -120,7 +120,6 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
-            <version>6.1.0-M1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -131,21 +130,18 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-        </dependency>
-
-        <!-- Source: https://mvnrepository.com/artifact/org.testcontainers/junit-jupiter -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- Source: https://mvnrepository.com/artifact/org.testcontainers/mysql -->
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>mysql</artifactId>
-            <version>1.21.4</version>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-mysql</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -154,11 +150,9 @@
             <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
 
-        <!-- Source: https://mvnrepository.com/artifact/org.flywaydb/flyway-mysql -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
-            <version>11.20.3</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -173,7 +167,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>21</release>
+                    <release>25</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
