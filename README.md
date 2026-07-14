@@ -3,12 +3,37 @@ Shopping List Application (Created for Cyber Media Software Developer/Engineer R
 
 ---
 
+## Table of contents
+
+- [Description](#description)
+  - [Technology stack](#technology-stack)
+- [Prerequisites](#prerequisites)
+  - [Local startup](#local-startup)
+- [API documentation](#api-documentation)
+  - [Endpoint summary](#endpoint-summary)
+  - [Sign up](#sign-up)
+  - [Log in](#log-in)
+  - [Create a shopping list](#create-a-shopping-list)
+  - [Retrieve a shopping list](#retrieve-a-shopping-list)
+  - [Append a list item](#append-a-list-item)
+  - [Toggle an item in the basket](#toggle-an-item-in-the-basket)
+  - [Delete a list item](#delete-a-list-item)
+  - [Reorder list items](#reorder-list-items)
+  - [Error response bodies](#error-response-bodies)
+- [Testing](#testing)
+  - [Running the complete test suite](#running-the-complete-test-suite)
+  - [Running individual test layers](#running-individual-test-layers)
+  - [Running tests in IntelliJ IDEA](#running-tests-in-intellij-idea)
+
+---
+
 ## Description
 
 - The Shopping List Application is a REST API for user registration, JWT authentication, shopping-list creation, with built in budget management functionality.
 - Database migrations are managed by Flyway, and application data is persisted in MySQL.
 - Protected API endpoints use JWT bearer authentication and verify that the authenticated user owns the requested shopping list.
 - All API endpoints require a correlation ID header for request tracing.
+
 
 ### Technology stack
 
@@ -319,6 +344,8 @@ Service-generated errors use this shape:
   "message": "Request validation failed"
 }
 ```
+
+---
 
 ## Testing
 
