@@ -4,7 +4,7 @@ CREATE TABLE list_items (
     item_name VARCHAR(255) NOT NULL,
     quantity INT UNSIGNED NOT NULL DEFAULT 1,
     unit_price DECIMAL(10, 2) NULL,
-    is_purchased BOOLEAN NOT NULL DEFAULT FALSE,
+    in_basket BOOLEAN NOT NULL DEFAULT FALSE,
     list_position INT UNSIGNED NOT NULL,
 
     CONSTRAINT pk_shopping_list_items
@@ -15,9 +15,6 @@ CREATE TABLE list_items (
         REFERENCES shopping_lists (list_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-
-    CONSTRAINT uq_shopping_list_items_position
-        UNIQUE (list_id, list_position),
 
     CONSTRAINT chk_shopping_list_items_quantity
         CHECK (quantity > 0),

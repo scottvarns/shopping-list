@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Shopping List API
-  description: API for managing shopping lists, allowing users to create, retrieve, update, and delete their shopping lists.
+  description: Authenticated API for creating and retrieving shopping lists and managing their ordered items.
   version: 1.0.0
 
 servers:
@@ -10,7 +10,7 @@ servers:
     description: Local development server
 
 paths:
-  /api/shoppping-list:
+  /api/shopping-list:
     post:
       tags:
         - Shopping Lists
@@ -44,8 +44,6 @@ paths:
       responses:
         '201':
           description: Shopping list created successfully
-          headers:
-
           content:
             application/json:
               schema:
@@ -73,24 +71,14 @@ paths:
                 invalidRequest:
                   summary: Validation error
                   value:
-                    error: Bad Request
+                    error: BAD_REQUEST
                     message: Spending limit must be greater than or equal to zero
 
         '401':
-          description: Unauthorized access
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                unauthorizedAccess:
-                  summary: Unauthorized access
-                  value:
-                    error: Unauthorized
-                    message: User is not authenticated
+          description: Bearer token is missing or invalid
 
         '403':
-          description: Forbidden access
+          description: Authenticated user does not match the requested user ID
           content:
             application/json:
               schema:
@@ -99,22 +87,15 @@ paths:
                 forbiddenAccess:
                   summary: Forbidden access
                   value:
-                    error: Forbidden
+                    error: FORBIDDEN
                     message: User ID [123] is not authorized to create a shopping list for user ID [456]
 
         '404':
-          description: User not found
+          description: The requested user does not exist
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                userNotFound:
-                  summary: User does not exist
-                  value:
-                    error: Not Found
-                    message: User ID [999] does not exist
-
         '409':
           description: A conflicting shopping list already exists
           content:
@@ -125,28 +106,298 @@ paths:
                 duplicateList:
                   summary: Duplicate shopping list
                   value:
-                    error: Conflict
+                    error: CONFLICT
                     message: A shopping list with the name [weekly shop] already exists
 
         '500':
-          description: Unexpected server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: An unexpected server or database error occurred
 
-        '503':
-          description: Service unavailable
+  /api/shopping-list/{listId}:
+    get:
+      tags:
+        - Shopping Lists
+      summary: Retrieve a shopping list
+      description: Retrieves a shopping list owned by the authenticated user, including its ordered items and calculated budget information.
+      operationId: getShoppingList
+      parameters:
+        - in: path
+          name: listId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Correlation-ID
+          description: Required UUID used to correlate request processing and logs.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shopping list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListDetailsResponse'
+        '400':
+          description: Invalid path or correlation ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                serviceUnavailable:
-                  summary: Service unavailable
-                  value:
-                    error: Service Unavailable
-                    message: The service is temporarily unavailable. Please try again later.
+        '401':
+          description: Bearer token is missing or invalid
+        '403':
+          description: Authenticated user does not own the shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list or its associated user does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
+
+  /api/shopping-list/{listId}/item:
+    post:
+      tags:
+        - Shopping Lists
+      summary: Append an item to a shopping list
+      description: Adds an item outside the basket at the end of a shopping list owned by the authenticated user.
+      operationId: createListItem
+      parameters:
+        - in: path
+          name: listId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Correlation-ID
+          description: Required UUID used to correlate request processing and logs.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListItemRequest'
+      responses:
+        '201':
+          description: List item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Bearer token is missing or invalid
+        '403':
+          description: Authenticated user does not own the shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list or its associated user does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: A list item with the same name already exists on the shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
+
+  /api/shopping-list/{listId}/item/reorder:
+    patch:
+      tags:
+        - Shopping Lists
+      summary: Reorder shopping-list items
+      description: Assigns specified items to the requested positions. Partial updates preserve the relative order of unspecified items while filling the remaining positions.
+      operationId: reorderListItems
+      parameters:
+        - in: path
+          name: listId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Correlation-ID
+          description: Required UUID used to correlate request processing and logs.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ReorderListItemRequest'
+            example:
+              - itemId: 46
+                listPosition: 1
+              - itemId: 44
+                listPosition: 3
+      responses:
+        '204':
+          description: Shopping-list items reordered successfully
+        '400':
+          description: Invalid path, correlation ID, duplicate item or position, or position outside the list range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Bearer token is missing or invalid
+        '403':
+          description: Authenticated user does not own the shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list, associated user, or requested list item does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
+
+  /api/shopping-list/{listId}/item/{itemId}:
+    patch:
+      tags:
+        - Shopping Lists
+      summary: Toggle whether an item is in the basket
+      description: Toggles inBasket without removing the item or changing any list positions.
+      operationId: toggleListItemInBasket
+      parameters:
+        - in: path
+          name: listId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Correlation-ID
+          description: Required UUID used to correlate request processing and logs.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: List item's in-basket state toggled successfully
+        '400':
+          description: Invalid path or correlation ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Bearer token is missing or invalid
+        '403':
+          description: Authenticated user does not own the shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list, associated user, or list item does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
+
+    delete:
+      tags:
+        - Shopping Lists
+      summary: Delete an item from a shopping list
+      description: Deletes an item from a shopping list and closes the gap in the remaining list positions.
+      operationId: deleteListItem
+      parameters:
+        - in: path
+          name: listId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Correlation-ID
+          description: Required UUID used to correlate request processing and logs.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: List item deleted successfully
+        '400':
+          description: Invalid path or correlation ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Bearer token is missing or invalid
+        '403':
+          description: Authenticated user does not own the shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list, associated user, or list item does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
 
 components:
 
@@ -242,12 +493,172 @@ components:
         remainingBudget:
           type: number
           format: double
+          nullable: true
           description: Spending limit less the current total cost of all items on the list
 
         overBudget:
           type: boolean
           description: Indicates whether the total cost exceeds the spending limit
           example: false
+
+    CreateListItemRequest:
+      type: object
+      required:
+        - itemName
+        - unitCost
+        - quantity
+      properties:
+        itemName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Milk
+        unitCost:
+          type: number
+          format: double
+          minimum: 0
+          example: 1.25
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    ReorderListItemRequest:
+      type: object
+      required:
+        - itemId
+        - listPosition
+      properties:
+        itemId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: ID of an item belonging to the shopping list
+          example: 46
+        listPosition:
+          type: integer
+          minimum: 1
+          description: Required final position within the shopping list
+          example: 1
+
+    ListItemResponse:
+      type: object
+      required:
+        - itemId
+        - listId
+        - itemName
+        - unitCost
+        - quantity
+        - inBasket
+        - listPosition
+      properties:
+        itemId:
+          type: integer
+          format: int64
+          example: 44
+        listId:
+          type: integer
+          format: int64
+          example: 12
+        itemName:
+          type: string
+          example: Milk
+        unitCost:
+          type: number
+          format: double
+          example: 1.25
+        quantity:
+          type: integer
+          example: 2
+        inBasket:
+          type: boolean
+          example: false
+        listPosition:
+          type: integer
+          example: 4
+
+    ShoppingListDetailsResponse:
+      type: object
+      required:
+        - listId
+        - userId
+        - listName
+        - totalCost
+        - overBudget
+        - items
+      properties:
+        listId:
+          type: integer
+          format: int64
+          example: 12
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        listName:
+          type: string
+          example: Weekly Shop
+        spendingLimit:
+          type: number
+          format: double
+          nullable: true
+          example: 75.00
+        date:
+          type: string
+          format: date
+          nullable: true
+          example: '2026-07-18'
+        totalCost:
+          type: number
+          format: double
+          description: Sum of unit cost multiplied by quantity for every item on the list
+          example: 11.00
+        remainingBudget:
+          type: number
+          format: double
+          nullable: true
+          description: Spending limit less the total cost; null when no spending limit is set
+          example: -1.00
+        overBudget:
+          type: boolean
+          description: Indicates whether total cost is greater than the spending limit
+          example: true
+        items:
+          type: array
+          description: List items in ascending list-position order
+          items:
+            $ref: '#/components/schemas/ShoppingListItemResponse'
+
+    ShoppingListItemResponse:
+      type: object
+      required:
+        - itemId
+        - itemName
+        - unitCost
+        - quantity
+        - inBasket
+        - listPosition
+      properties:
+        itemId:
+          type: integer
+          format: int64
+          example: 44
+        itemName:
+          type: string
+          example: Milk
+        unitCost:
+          type: number
+          format: double
+          example: 1.25
+        quantity:
+          type: integer
+          example: 2
+        inBasket:
+          type: boolean
+          example: false
+        listPosition:
+          type: integer
+          example: 1
 
     ErrorResponse:
       type: object
@@ -258,7 +669,7 @@ components:
 
         error:
           type: string
-          example: Bad Request
+          example: BAD_REQUEST
 
         message:
           type: string

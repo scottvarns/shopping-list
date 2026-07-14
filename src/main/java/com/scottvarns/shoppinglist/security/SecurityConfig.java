@@ -1,5 +1,6 @@
 package com.scottvarns.shoppinglist.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +23,10 @@ public class SecurityConfig {
                         // Allow unauthenticated access to the authentication endpoints and actuator health/info endpoints
                         .requestMatchers("/api/auth/**", "/actuator/health", "/actuator/info").permitAll()
                         .anyRequest().authenticated())
+                // Return 401 when a protected request has no valid JWT authentication
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint((request, response, exception) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
                 // Add the JWT authentication filter before the UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

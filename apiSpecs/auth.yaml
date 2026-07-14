@@ -64,6 +64,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
 
   /api/auth/login:
     post:
@@ -116,6 +118,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: An unexpected server or database error occurred
 
 components:
   schemas:
@@ -129,6 +133,7 @@ components:
         email:
           type: string
           format: email
+          minLength: 1
           maxLength: 255
           example: user@example.com
         password:
@@ -139,6 +144,7 @@ components:
           example: your-password
         name:
           type: string
+          minLength: 1
           maxLength: 150
           example: Your Name
 
@@ -151,10 +157,12 @@ components:
         email:
           type: string
           format: email
+          minLength: 1
           example: user@example.com
         password:
           type: string
           format: password
+          minLength: 1
           example: your-password
 
     AuthenticationResponse:
@@ -193,7 +201,7 @@ components:
       properties:
         error:
           type: string
-          example: Bad Request
+          example: BAD_REQUEST
         message:
           type: string
           example: Request validation failed

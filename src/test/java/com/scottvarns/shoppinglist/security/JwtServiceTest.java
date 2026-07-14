@@ -18,10 +18,13 @@ class JwtServiceTest {
      */
     @Test
     void test01_extractUserId_whenValidTokenProvided_thenReturnsAuthenticatedUserId() {
+        // Create a JwtService with a test secret and a token expiration time of 3600 seconds (1 hour)
         JwtService jwtService = new JwtService(TEST_SECRET, 3600);
 
+        // Generate a token for user ID 42 and email
         String token = jwtService.generateToken(42L, "user@example.com");
 
+        // Extract the user ID from the token and assert that it is equal to 42L
         assertThat(jwtService.extractUserId(token)).isEqualTo(42L);
     }
 }

@@ -6,15 +6,7 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(
-        name = "list_items",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uq_shopping_list_items_position",
-                        columnNames = {"list_id", "list_position"}
-                )
-        }
-)
+@Table(name = "list_items")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,8 +31,8 @@ public class ListItem {
     @Column(name = "unit_price", precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(name = "is_purchased", nullable = false)
-    private Boolean isPurchased;
+    @Column(name = "in_basket", nullable = false)
+    private Boolean inBasket;
 
     @Column(name = "list_position", nullable = false)
     private Integer listPosition;

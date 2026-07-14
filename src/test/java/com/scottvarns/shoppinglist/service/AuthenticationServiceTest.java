@@ -51,20 +51,32 @@ class AuthenticationServiceTest {
      */
     @Test
     void test01_signup_whenEmailIsUnused_thenCreatesUserWithEncodedPassword() {
-        SignupRequestDTO request = new SignupRequestDTO("user@example.com", "your-password", "Your Name");
+        // Create a SignupRequestDTO with valid details and a User entity representing the saved user
+        SignupRequestDTO request = new SignupRequestDTO(
+                "user@example.com",
+                "your-password",
+                "Your Name"
+        );
+        // Create a User entity representing the saved user with an encoded password
         User savedUser = User.builder()
                 .userId(1L)
                 .email(request.email())
                 .passwordHash("encoded-password")
                 .name(request.name())
                 .build();
+
+        // Mock the behavior of the userRepository and passwordEncoder to simulate the signup process
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordEncoder.encode(request.password())).thenReturn("encoded-password");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
+        // Call the signup method and capture the response
         UserResponseDTO response = authenticationService.signup(request);
 
+        // Assert that the response matches the expected UserResponseDTO
         assertThat(response).isEqualTo(new UserResponseDTO(1L, "user@example.com", "Your Name"));
+
+        // Verify that the userRepository.save method was called with the correct User entity and assert that the password hash is as expected
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue().getPasswordHash()).isEqualTo("encoded-password");
@@ -76,13 +88,22 @@ class AuthenticationServiceTest {
      */
     @Test
     void test02_signup_whenEmailAlreadyExists_thenThrowsConflictException() {
-        SignupRequestDTO request = new SignupRequestDTO("user@example.com", "your-password", "Your Name");
+        // Create a SignupRequestDTO with an email that already exists in the system
+        SignupRequestDTO request = new SignupRequestDTO(
+                "user@example.com",
+                "your-password",
+                "Your Name"
+        );
+
+        // Mock the behavior of the userRepository to simulate that the email already exists
         when(userRepository.existsByEmail(request.email())).thenReturn(true);
 
+        // Call the signup method and assert that it throws a ConflictException with the expected message
         assertThatThrownBy(() -> authenticationService.signup(request))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("An account already exists for this email address.");
 
+        // Verify that the passwordEncoder.encode and userRepository.save methods are not called
         verify(passwordEncoder, never()).encode(any());
         verify(userRepository, never()).save(any());
     }
@@ -93,14 +114,27 @@ class AuthenticationServiceTest {
      */
     @Test
     void test03_login_whenCredentialsAreValid_thenReturnsJwt() {
-        LoginRequestDTO request = new LoginRequestDTO("user@example.com", "your-password");
-        User user = User.builder().userId(1L).email(request.email()).passwordHash("encoded-password").build();
+        // Create a LoginRequestDTO with valid credentials and a User entity representing the user in the system
+        LoginRequestDTO request = new LoginRequestDTO(
+                "user@example.com",
+                "your-password"
+        );
+
+        User user = User.builder()
+                .userId(1L)
+                .email(request.email())
+                .passwordHash("encoded-password")
+                .build();
+
+        // Mock the behavior of the userRepository, passwordEncoder, and jwtService to simulate a successful login process
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(true);
         when(jwtService.generateToken(1L, request.email())).thenReturn("jwt-token");
 
+        // Call the login method and capture the response
         AuthenticationResponseDTO response = authenticationService.login(request);
 
+        // Assert that the response contains the expected JWT token
         assertThat(response.token()).isEqualTo("jwt-token");
     }
 
@@ -110,11 +144,22 @@ class AuthenticationServiceTest {
      */
     @Test
     void test04_login_whenPasswordIsInvalid_thenThrowsUnauthorizedException() {
-        LoginRequestDTO request = new LoginRequestDTO("user@example.com", "wrong-password");
-        User user = User.builder().email(request.email()).passwordHash("encoded-password").build();
+        // Create a LoginRequestDTO with an invalid password and a User entity representing the user in the system
+        LoginRequestDTO request = new LoginRequestDTO(
+                "user@example.com",
+                "wrong-password"
+        );
+
+        User user = User.builder()
+                .email(request.email())
+                .passwordHash("encoded-password")
+                .build();
+
+        // Mock the behavior of the userRepository and passwordEncoder to simulate an invalid password scenario
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(false);
 
+        // Call the login method and assert that it throws an UnauthorizedException with the expected message
         assertThatThrownBy(() -> authenticationService.login(request))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessage("Invalid email or password.");
@@ -126,13 +171,21 @@ class AuthenticationServiceTest {
      */
     @Test
     void test05_login_whenUserDoesNotExist_thenThrowsUnauthorizedException() {
-        LoginRequestDTO request = new LoginRequestDTO("unknown@example.com", "your-password");
+        // Create a LoginRequestDTO with an email that does not exist in the system
+        LoginRequestDTO request = new LoginRequestDTO(
+                "unknown@example.com",
+                "your-password"
+        );
+
+        // Mock the behavior of the userRepository to simulate that no user exists for the provided email
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
 
+        // Call the login method and assert that it throws an UnauthorizedException with the expected message
         assertThatThrownBy(() -> authenticationService.login(request))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessage("Invalid email or password.");
 
+        // Verify that the passwordEncoder and jwtService are not interacted with since the user does not exist
         verifyNoInteractions(passwordEncoder, jwtService);
     }
 }

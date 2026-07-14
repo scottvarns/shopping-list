@@ -201,14 +201,14 @@
         <profile>
             <id>local</id>
             <properties>
-                <spring.profiles.active>local</spring.profiles.active>
+                <spring-boot.run.profiles>local</spring-boot.run.profiles>
             </properties>
         </profile>
 
         <profile>
             <id>test</id>
             <properties>
-                <spring.profiles.active>test</spring.profiles.active>
+                <spring-boot.run.profiles>test</spring-boot.run.profiles>
             </properties>
         </profile>
     </profiles>
