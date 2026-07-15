@@ -8,6 +8,7 @@
 - [Description](#description)
   - [Technology stack](#technology-stack)
 - [Prerequisites](#prerequisites)
+- [Database schema](#database-schema)
 - [API documentation](#api-documentation)
   - [Endpoint summary](#endpoint-summary)
   - [Sign up](#sign-up)
@@ -57,6 +58,45 @@
   openssl rand -base64 32
   ```
   
+---
+
+## Database schema
+
+The below ERD visualizes the database schema. 
+The `USERS` table stores user accounts, the `SHOPPING_LISTS` table stores shopping lists, and the `LIST_ITEMS` table stores items within each list. 
+Each list belongs to a single user, and each item belongs to a single list.
+
+```mermaid
+erDiagram
+    USERS ||--o{ SHOPPING_LISTS : "owns"
+    SHOPPING_LISTS ||--o{ LIST_ITEMS : "contains"
+
+    USERS {
+        BIGINT user_id PK "unsigned, auto-increment"
+        VARCHAR_255 email UK "not null"
+        VARCHAR_255 password_hash "not null"
+        VARCHAR_150 name "not null"
+    }
+
+    SHOPPING_LISTS {
+        BIGINT list_id PK "unsigned, auto-increment"
+        BIGINT user_id FK "unsigned, not null"
+        VARCHAR_150 list_name "not null"
+        DECIMAL_10_2 spending_limit "nullable, must be >= 0"
+        DATE date "nullable"
+    }
+
+    LIST_ITEMS {
+        BIGINT item_id PK "unsigned, auto-increment"
+        BIGINT list_id FK "unsigned, not null"
+        VARCHAR_255 item_name "not null"
+        INT quantity "unsigned, not null, default 1, must be > 0"
+        DECIMAL_10_2 unit_price "nullable, must be >= 0"
+        BOOLEAN in_basket "not null, default false"
+        INT list_position "unsigned, not null"
+    }
+```
+
 ---
 
 ## API documentation
